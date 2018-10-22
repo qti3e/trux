@@ -69,11 +69,20 @@ export class Server extends Router {
      * });
      */
 
-    const request = new Request(options, conn);
-    await router.handleURL(options.url, request);
+    const res_headers = `HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Vary: Accept-Encoding,Cookie
 
+`.split(/\r?\n/g).join("\r\n");
+    const encoder = new TextEncoder("utf-8");
+    const res_headers_buf = encoder.encode(res_headers);
+    await conn.write(res_headers_buf);
+    await conn.write(encoder.encode("Hello " + options.url + "\n"));
     conn.close();
   }
 }
 
-const server = new Server("0.0.0.0:8080");
+const server = new Server();
+server.listen("0.0.0.0:8080");
