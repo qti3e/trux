@@ -73,7 +73,7 @@ export function compile(set: NodeSet): State[] {
   return arr;
 }
 
-function refactorIds(states: State[]): void {
+export function refactorIds(states: State[]): void {
   const map = new Map<number, number>();
   for (let i = 0; i < states.length; ++i) {
     map.set(states[i].id, i);
