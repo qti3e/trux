@@ -33,6 +33,7 @@ async function run(): Promise<never> {
     } catch (e) {
       ++failed;
       console.log(`${xmark} ${name} failed.`);
+      console.log(e);
     }
   }
 
@@ -40,8 +41,8 @@ async function run(): Promise<never> {
     exit(0);
   }
 
-  throw new Error(`There were ${failed} test failures.`);
-  exit(1);
+  console.log(`There were ${failed} test failures.`);
+  return exit(1);
 }
 
 setTimeout(() => {

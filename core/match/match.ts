@@ -24,7 +24,7 @@ export function log(o) {
   cache = null; // Enable garbage collection
 }
 
-const nodes = parsePattern("a(:p|a)(c|x)?");
-const states = compile(nodes);
-log(states);
-log(optimize(states));
+// const nodes = parsePattern("a(:p|a)(c|x)?");
+// const states = compile(nodes);
+// log(states);
+// log(optimize(states));

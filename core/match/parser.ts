@@ -119,6 +119,9 @@ function parse(pattern: string, from = 0): ParserReturn {
           ++cursor;
           node.name += pattern[cursor];
         }
+        if (node.name === "") {
+          throw new TypeError("Parameter name expected.");
+        }
         // cursor points to the last character of parameter's name.
         // We don't want to parse that character again so +1.
         ++cursor;

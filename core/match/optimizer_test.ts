@@ -39,7 +39,7 @@ function str(state: types.State): string {
 
 // Tests
 
-test(function test_joinFixedStates(): void {
+test(function optimizer_joinFixedStates(): void {
   assertEqual(joinFixedStates([ 
     fixed("Test"),
     fixed("A"),
