@@ -1,7 +1,6 @@
 import { test, assert, assertEqual } from "../testing/test.ts";
 import { parsePattern } from "./parser.ts";
 import { NodeKind } from "./common.ts";
-import { log } from "./match.ts";
 
 test(function parser_emptyPattern() {
   const ret = parsePattern("") as any;
@@ -83,4 +82,15 @@ test(function parser_escape() {
   assertEqual(test2.nodes[0].data, "a(");
   assertEqual(test2.nodes[1].kind, NodeKind.GROUP);
   // TODO(qti3e) Support \n ?
+});
+
+test(function parser_unmatchedParentheses() {
+  let err;
+  try {
+    parsePattern("(p(x)r");
+  } catch (e) {
+    err = e;
+  }
+  assert(err);
+  assertEqual(err.message, "Unmatched parentheses.");
 });

@@ -57,6 +57,9 @@ function parse(pattern: string, from = 0): ParserReturn {
           isOptional: false
         };
         const tmp = parse(pattern, cursor + 1);
+        if (pattern[tmp.cursor] !== ")") {
+          throw new Error("Unmatched parentheses.");
+        }
         const childNodes = tmp.set.nodes;
 
         let currentSet: types.NodeSet = {
