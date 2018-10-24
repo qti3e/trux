@@ -42,10 +42,8 @@ export function optimize(states: State[]): OptimizerData {
       for (const state of path) {
         if (state.kind === StateKind.FIXED) {
           len += state.data.length;
-        } else {
-          // Remmber: Start and End states are not in path.
-          // So state is a PARAMETERIC state.
-          // And it must match at least 1 byte.
+        } else if (state.kind === StateKind.PARAMETERIC) {
+          // A PARAMETERIC state must match at least 1 byte.
           len += 1;
         }
       }
@@ -77,6 +75,16 @@ export function optimize(states: State[]): OptimizerData {
     };
   }
 
+
+  for (let i = 0; i < dynamicPaths.length; ++i) {
+    dynamicPaths[i] = joinFixedStates(dynamicPaths[i]);
+    dynamicPaths[i] = removeEmptyNodes(dynamicPaths[i]);
+    assertTwoParametericNodes(dynamicPaths[i]);
+  }
+
+  // Remmber: Test for H(:id)H
+  // Also H(:id)/(H|P)?
+
   return {
     onlyFixed: false,
     minLength,
@@ -87,14 +95,47 @@ export function optimize(states: State[]): OptimizerData {
   };
 }
 
-function remap(paths: Array<State[]>, preStates: State[]): State[] {
-  //  return paths as any;
-  const states: StatesObj = {};
-  // TODO(qti3e);
+export function joinFixedStates(states: State[]): State[] {
+  const ret: State[] = [];
+
+  for (let i = 0; i < states.length; ++i) {
+    const state = states[i];
+    if (state.kind === StateKind.FIXED) {
+      const data: string[] = [state.data];
+      let nextState = states[i + 1];
+      while (nextState && nextState.kind === StateKind.FIXED) {
+        data.push(nextState.data);
+        nextState = states[++i + 1];
+      }
+      ret.push({
+        ...state,
+        data: data.join("")
+      });
+    } else {
+      ret.push(state);
+    }
+  }
+
+  return ret;
+}
+
+export function removeEmptyNodes(states: State[]): State[] {
+  // TODO(qti3e)
   return states;
 }
 
-function getFixedEnd(path: State[]): string {
+export function assertTwoParametericNodes(states: State[]): void {
+  // TODO(qti3e)
+}
+
+export function remap(paths: Array<State[]>, preStates: State[]): State[] {
+  //  return paths as any;
+  const states: StatesObj = {};
+  // TODO(qti3e);
+  return [];
+}
+
+export function getFixedEnd(path: State[]): string {
   const data: string[] = [];
   for (let i = path.length - 1; i >= 0; --i) {
     const state = path[i];
@@ -107,16 +148,7 @@ function getFixedEnd(path: State[]): string {
   return data.reverse().join("");
 }
 
-function isFixed(path: State[]): path is FixedStateArray {
-  for (const state of path) {
-    if (state.kind === StateKind.PARAMETERIC) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function getAllPaths(states: State[]): Array<State[]> {
+export function getAllPaths(states: State[]): Array<State[]> {
   const ret: Array<State[]> = [];
 
   const statesStack: State[] = [states[0]];
@@ -126,7 +158,7 @@ function getAllPaths(states: State[]): Array<State[]> {
     const selectedPath = pathStack.pop();
     const currentState = statesStack.pop();
     if (currentState.kind === StateKind.END) {
-      ret.push([...statesStack.slice(1)]);
+      ret.push([...statesStack.slice(1), currentState]);
     }
     const nextStateId = currentState.nextStates[selectedPath + 1];
     const nextState = states[nextStateId];
@@ -140,4 +172,13 @@ function getAllPaths(states: State[]): Array<State[]> {
   }
 
   return ret;
+}
+
+function isFixed(path: State[]): path is FixedStateArray {
+  for (const state of path) {
+    if (state.kind === StateKind.PARAMETERIC) {
+      return false;
+    }
+  }
+  return true;
 }
