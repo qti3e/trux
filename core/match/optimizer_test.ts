@@ -1,14 +1,13 @@
+import * as types from "./types.ts";
 import { joinFixedStates } from "./optimizer.ts";
 import { test, assertEqual } from "../testing/test.ts";
-import { State, StateKind, FixedState, ParametericState } from "./compiler.ts";
-
-// TODO(qti3e) Move all of the types to types.ts
+import { StateKind } from "./common.ts";
 
 // Utils
 
 let id = 0;
 
-function fixed(data: string, nextStates = []): FixedState {
+function fixed(data: string, nextStates = []): types.FixedState {
   ++id;
   return {
     kind: StateKind.FIXED,
@@ -18,7 +17,7 @@ function fixed(data: string, nextStates = []): FixedState {
   };
 }
 
-function parameteric(name: string, nextStates = []): ParametericState {
+function parameteric(name: string, nextStates = []): types.ParametericState {
   ++id;
   return {
     kind: StateKind.PARAMETERIC,
@@ -28,7 +27,7 @@ function parameteric(name: string, nextStates = []): ParametericState {
   };
 }
 
-function str(state: State): string {
+function str(state: types.State): string {
   switch (state.kind) {
     case StateKind.PARAMETERIC:
       return `:${state.name}`;

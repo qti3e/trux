@@ -1,63 +1,21 @@
 // The codes here are to parse a pattern into a valid AST.
-export const enum NodeKind {
-  SET,
-  LITERAL,
-  PARAMETER,
-  GROUP,
-  /* @private */ GROUP_SEP,
-}
-
-export interface NodeSet {
-  kind: NodeKind.SET;
-  id: number;
-  nodes: Node[];
-}
-
-export interface LiteralNode {
-  kind: NodeKind.LITERAL;
-  id: number;
-  data: string;
-}
-
-export interface ParameterNode {
-  kind: NodeKind.PARAMETER;
-  id: number;
-  name: string;
-  isOptional: boolean;
-}
-
-export interface GroupNode {
-  kind: NodeKind.GROUP;
-  id: number;
-  expressions: Array<NodeSet>;
-  isOptional: boolean;
-}
-
-export interface GroupSepNode {
-  kind: NodeKind.GROUP_SEP;
-  id: number;
-}
-
-export type Node =
-  | LiteralNode
-  | ParameterNode
-  | GroupNode
-  | GroupSepNode;
-
-interface ParserReturn {
-  set: NodeSet;
-  cursor: number;
-}
+import * as types from "./types.ts";
+import { NodeKind } from "./common.ts";
 
 let lastId = 0;
 
+interface ParserReturn {
+  set: types.NodeSet;
+  cursor: number;
+}
+
 function parse(pattern: string, from = 0): ParserReturn {
-  const set: NodeSet = {
+  const set: types.NodeSet = {
     kind: NodeKind.SET,
     id: ++lastId,
     nodes: [],
   }
-  const nodes: Node[] = set.nodes;
+  const nodes: types.Node[] = set.nodes;
 
   let cursor = from;
   let isEscaped = false;
@@ -92,7 +50,7 @@ function parse(pattern: string, from = 0): ParserReturn {
 
       // Try to find a group.
       if (char === "(") {
-        const node: GroupNode = {
+        const node: types.GroupNode = {
           kind: NodeKind.GROUP,
           id: ++lastId,
           expressions: [],
@@ -101,7 +59,7 @@ function parse(pattern: string, from = 0): ParserReturn {
         const tmp = parse(pattern, cursor + 1);
         const childNodes = tmp.set.nodes;
 
-        let currentSet: NodeSet = {
+        let currentSet: types.NodeSet = {
           kind: NodeKind.SET,
           id: ++lastId,
           nodes: [],
@@ -146,7 +104,7 @@ function parse(pattern: string, from = 0): ParserReturn {
 
       // To handle parameters.
       if (char === ":") {
-        const node: ParameterNode = {
+        const node: types.ParameterNode = {
           kind: NodeKind.PARAMETER,
           id: ++lastId,
           name: "",
@@ -209,7 +167,7 @@ function parse(pattern: string, from = 0): ParserReturn {
   };
 }
 
-export function parsePattern(pattern: string): NodeSet {
+export function parsePattern(pattern: string): types.NodeSet {
   lastId = 0;
   const { set, cursor } = parse(pattern);
   if (cursor !== pattern.length) {

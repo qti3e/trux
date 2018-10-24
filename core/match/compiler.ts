@@ -1,61 +1,12 @@
 // Convert an AST into a data structure that can be used
 // to evaluate a pattern.
-import { Node, NodeSet, NodeKind } from "./parser.ts";
+import * as types from "./types.ts";
+import { NodeKind, StateKind, refactorIds } from "./common.ts";
 
-export const enum StateKind {
-  START,
-  FIXED,
-  PARAMETERIC,
-  END,
-}
-
-export interface StartState {
-  kind: StateKind.START;
-  id: number;
-  nextStates: number[];
-}
-
-export interface FixedState {
-  kind: StateKind.FIXED;
-  id: number;
-  data: string;
-  nextStates: number[];
-}
-
-export interface ParametericState {
-  kind: StateKind.PARAMETERIC;
-  id: number;
-  name: string;
-  nextStates: number[];
-}
-
-export interface EndState {
-  kind: StateKind.END;
-  id: number;
-  // It must be empty.
-  // Otherwise there is an error.
-  nextStates: number[];
-}
-
-export type State =
-  | StartState
-  | FixedState
-  | ParametericState
-  | EndState;
-
-export interface StatesObj {
-  [id: number]: State;
-}
-
-interface SpecialStates {
-  start: number;
-  end: number;
-}
-
-export function compile(set: NodeSet): State[] {
-  const states: StatesObj = {};
-  const idToASTNode = new Map<number, Node>();
-  const specialStates = { start: 0, end: 1 };
+export function compile(set: types.NodeSet): types.State[] {
+  const states: types.StatesObj = {};
+  const idToASTNode = new Map<number, types.Node>();
+  const specialStates: types.SpecialStates = { start: 0, end: 1 };
   const nodes = set.nodes;
   // emptyStates will initilize states and idToASTNode.
   emptyStates(states, idToASTNode, nodes, specialStates);
@@ -73,21 +24,10 @@ export function compile(set: NodeSet): State[] {
   return arr;
 }
 
-export function refactorIds(states: State[]): void {
-  const map = new Map<number, number>();
-  for (let i = 0; i < states.length; ++i) {
-    map.set(states[i].id, i);
-    states[i].id = i;
-  }
-  for (const state of states) {
-    state.nextStates = state.nextStates.map(r => map.get(r));
-  }
-}
-
 function optinals(
-  nodes: Node[],
-  states: StatesObj,
-  idToASTNode: Map<number, Node>
+  nodes: types.Node[],
+  states: types.StatesObj,
+  idToASTNode: Map<number, types.Node>
 ): void {
   for (const node of nodes) {
     if (isOptional(node)) {
@@ -107,7 +47,10 @@ function optinals(
   }
 }
 
-function getConnectedNodesFromLeft(node: Node, states: StatesObj): number[] {
+function getConnectedNodesFromLeft(
+  node: types.Node,
+  states: types.StatesObj
+): number[] {
   const ret: number[] = [];
   if (node.kind === NodeKind.GROUP) {
     for (const e of node.expressions) {
@@ -123,7 +66,10 @@ function getConnectedNodesFromLeft(node: Node, states: StatesObj): number[] {
   return ret;
 }
 
-function getConnectedNodesFromRight(node: Node, states: StatesObj): number[] {
+function getConnectedNodesFromRight(
+  node: types.Node,
+  states: types.StatesObj
+): number[] {
   const ret: number[] = [];
   if (node.kind === NodeKind.GROUP) {
     for (const e of node.expressions) {
@@ -139,8 +85,8 @@ function getConnectedNodesFromRight(node: Node, states: StatesObj): number[] {
 function connect(
   from: number,
   to: number,
-  states: StatesObj,
-  idToASTNode: Map<number, Node>
+  states: types.StatesObj,
+  idToASTNode: Map<number, types.Node>
 ): void {
   const nodeA = idToASTNode.get(from);
   if (nodeA && nodeA.kind === NodeKind.GROUP) {
@@ -173,10 +119,10 @@ function connect(
 }
 
 function emptyStates(
-  states: StatesObj,
-  idToASTNode: Map<number, Node>,
-  nodes: Node[],
-  specialStates?: SpecialStates
+  states: types.StatesObj,
+  idToASTNode: Map<number, types.Node>,
+  nodes: types.Node[],
+  specialStates?: types.SpecialStates
 ): void {
   for (const node of nodes) {
     idToASTNode.set(node.id, node);
@@ -222,7 +168,7 @@ function emptyStates(
   }
 }
 
-function isOptional(node: Node): boolean {
+function isOptional(node: types.Node): boolean {
   if (!node) {
     return false;
   }
