@@ -1,4 +1,5 @@
-import { joinFixedStates } from "./optimizer.ts"; import { assertEqual } from "./test_util.ts";
+import { joinFixedStates } from "./optimizer.ts";
+import { test, assertEqual } from "../testing/test.ts";
 import { State, StateKind, FixedState, ParametericState } from "./compiler.ts";
 
 // TODO(qti3e) Move all of the types to types.ts
@@ -39,7 +40,7 @@ function str(state: State): string {
 
 // Tests
 
-(function test_joinFixedStates(): void {
+test(function test_joinFixedStates(): void {
   assertEqual(joinFixedStates([ 
     fixed("Test"),
     fixed("A"),
@@ -85,6 +86,4 @@ function str(state: State): string {
   ]);
 
   assertEqual(joinFixedStates([]).map(str), []);
-
-  console.log("test_joinFixedStates passed.");
-})();
+});

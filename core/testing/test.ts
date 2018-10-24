@@ -3,8 +3,12 @@ export { assert, assertEqual } from "./util.ts";
 
 export type TestFunction = () => void | Promise<void>;
 
-const xmark = "✗";
-const checkmark = "✓";
+const RESET = "\x1b[0m";
+const FG_RED = "\x1b[31m";
+const FG_GREEN = "\x1b[32m";
+const xmark = `${FG_RED}✗${RESET}`;
+const checkmark = `${FG_GREEN}✓${RESET}`;
+
 const tests = new Map<string, TestFunction>();
 
 export function test(fn: TestFunction): void {
