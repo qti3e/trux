@@ -34,6 +34,11 @@ export type State =
   | ParametericState
   | EndState;
 
+// A path is a array of states in order, which means
+// we don't care about nextStates property when using
+// this type.
+export type Path = State[];
+
 export interface StatesObj {
   [id: number]: State;
 }

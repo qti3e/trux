@@ -1,7 +1,12 @@
 import * as types from "./types.ts";
-import { joinFixedStates } from "./optimizer.ts";
-import { test, assertEqual } from "../testing/test.ts";
+import { test, assert, assertEqual } from "../testing/test.ts";
 import { StateKind } from "./common.ts";
+import {
+  checkPath,
+  joinFixedStates,
+  optimize,
+  removeEmptyNodes
+} from "./optimizer.ts";
 
 // Utils
 
@@ -85,4 +90,58 @@ test(function optimizer_joinFixedStates(): void {
   ]);
 
   assertEqual(joinFixedStates([]).map(str), []);
+});
+
+test(function optimizer_removeEmptyNodes() {
+  assertEqual(removeEmptyNodes([ 
+    fixed(""),
+    parameteric("A"),
+    fixed(""),
+    parameteric("B"),
+    fixed(""),
+    fixed(""),
+  ]).map(str), [
+    ":A", ":B"
+  ]);
+
+  // TODO(qti3e) Test a complete pattern.
+  // parse("s(r|)g");
+});
+
+test(function optimizer_checkPath() {
+  // It should work fine.
+  checkPath([
+    parameteric("A"),
+    fixed("."),
+    parameteric("B")
+  ]);
+
+  let err: Error;
+
+  try {
+    checkPath(removeEmptyNodes([
+      parameteric("A"),
+      fixed(""),
+      parameteric("B")
+    ]));
+  } catch (e) {
+    err = e;
+  }
+  assert(!!err);
+  err = null;
+    
+  try {
+    checkPath([
+      parameteric("A"),
+      fixed("t"),
+      parameteric("A")
+    ]);
+  } catch (e) {
+    err = e;
+  }
+  assert(!!err);
+});
+
+test(function optimizer() {
+  // TODO(qti3e)
 });

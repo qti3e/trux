@@ -65,11 +65,10 @@ export function optimize(states: types.State[]): types.OptimizerData {
     };
   }
 
-
   for (let i = 0; i < dynamicPaths.length; ++i) {
     dynamicPaths[i] = joinFixedStates(dynamicPaths[i]);
     dynamicPaths[i] = removeEmptyNodes(dynamicPaths[i]);
-    assertTwoParametericNodes(dynamicPaths[i]);
+    checkPath(dynamicPaths[i]);
   }
 
   // Remmber: Test for H(:id)H
@@ -85,8 +84,8 @@ export function optimize(states: types.State[]): types.OptimizerData {
   };
 }
 
-export function joinFixedStates(states: types.State[]): types.State[] {
-  const ret: types.State[] = [];
+export function joinFixedStates(states: types.Path): types.Path {
+  const ret: types.Path = [];
 
   for (let i = 0; i < states.length; ++i) {
     const state = states[i];
@@ -109,13 +108,48 @@ export function joinFixedStates(states: types.State[]): types.State[] {
   return ret;
 }
 
-export function removeEmptyNodes(states: types.State[]): types.State[] {
-  // TODO(qti3e)
-  return states;
+export function removeEmptyNodes(states: types.Path): types.Path {
+  const ret: types.Path = [];
+
+  for (const state of states) {
+    if (state.kind === StateKind.FIXED) {
+      if (state.data === "") {
+        continue;
+      }
+    }
+    ret.push(state);
+  }
+
+  return ret;
 }
 
-export function assertTwoParametericNodes(states: types.State[]): void {
-  // TODO(qti3e)
+// This function is to check two things:
+// 1. There shouldn't be two param with the same name in a path.
+//  Example:
+//    Invalid: "X/:id/:id"
+//    Valid: "X/:id/:id2"
+// 2. A path must not have two parameteric states next to each other.
+//  Example:
+//    Invalid: "Y/:r:p"
+//    Valid: "Y/:r/:p"
+export function checkPath(path: types.Path): void {
+  const seen: string[] = [];
+  let parametericAllowd = true;
+
+  for (const state of path) {
+    if (state.kind === StateKind.PARAMETERIC) {
+      if (!parametericAllowd) {
+        throw new Error("A parameter must not come after another parameter.");
+      }
+      if (seen.includes(state.name)) {
+        throw new Error("A parameter name must be unique.");
+      }
+      parametericAllowd = false;
+      seen.push(state.name);
+    } else {
+      parametericAllowd = true;
+    }
+  }
 }
 
 export function remap(
