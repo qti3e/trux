@@ -152,14 +152,117 @@ export function checkPath(path: types.Path): void {
   }
 }
 
+// TODO(qti3e) This could be done much faster.
 export function remap(
   paths: Array<types.State[]>,
   preStates: types.State[]
 ): types.State[] {
-  //  return paths as any;
+  // When we process a pattern like "H(:id)H",
+  // we will end up by a path like this:
+  // [ fixed("H"), parameteric("id"), fixed("H"), end() ]
+  // And in this case if we consider these two Hs equal, then
+  // we will end up with an infinte loop.
+  // So basically, what we're doing here is searching paths for
+  // duplicated fixed nodes and push them into the `circular`
+  // array.
+  const circular: string[] = [];
+  for (const path of paths) {
+    const seen: string[] = [];
+    for (const state of path) {
+      if (state.kind === StateKind.FIXED) {
+        if (seen.indexOf(state.data) > -1) {
+          circular.push(state.data);
+        } else {
+          seen.push(state.data);
+        }
+      }
+    }
+  }
+
+  let lastID = 0;
+  const dataToID = new Map<string, number>();
+  const paramNameToID = new Map<string, number>();
+  const prevID2ID = new Map<number, number>();
   const states: types.StatesObj = {};
-  // TODO(qti3e);
-  return [];
+  const startState: types.StartState = {
+    kind: StateKind.START,
+    id: ++lastID,
+    nextStates: []
+  };
+  states[lastID] = startState;
+
+  for (const path of paths) {
+    if (path.length === 0) {
+      continue;
+    }
+    for (let i = 0; i < path.length + 1; ++i) {
+      if (i > 1) {
+        const stateA = path[i - 2];
+        const stateB = path[i - 1];
+        const idA = prevID2ID.get(stateA.id);
+        const idB = prevID2ID.get(stateB.id);
+        if (states[idA].nextStates.indexOf(idB) < 0) {
+          states[idA].nextStates.push(idB);
+        }
+      }
+      if (i === path.length) {
+        break;
+      }
+      const state = path[i];
+      if (prevID2ID.has(state.id)) {
+        continue;
+      }
+      const id = ++lastID;
+      switch (state.kind) {
+        case StateKind.FIXED:
+          if (circular.indexOf(state.data) < 0) {
+            if (dataToID.has(state.data)) {
+              prevID2ID.set(state.id, dataToID.get(state.data));
+              continue;
+            }
+          }
+          prevID2ID.set(state.id, id);
+          dataToID.set(state.data, id);
+          states[id] = {
+            kind: StateKind.FIXED,
+            id,
+            data: state.data,
+            nextStates: []
+          };
+          break;
+        case StateKind.PARAMETERIC:
+          if (paramNameToID.has(state.name)) {
+            prevID2ID.set(state.id, paramNameToID.get(state.name));
+            continue;
+          }
+          prevID2ID.set(state.id, id);
+          paramNameToID.set(state.name, id);
+          states[id] = {
+            kind: StateKind.PARAMETERIC,
+            id,
+            name: state.name,
+            nextStates: []
+          };
+          break;
+        case StateKind.END:
+          prevID2ID.set(state.id, id);
+          states[id] = {
+            kind: StateKind.END,
+            id,
+            nextStates: []
+          };
+          break;
+      }
+    }
+    const firstId = prevID2ID.get(path[0].id);
+    if (startState.nextStates.indexOf(firstId) < 0) {
+      startState.nextStates.push(firstId);
+    }
+  }
+
+  const arr = Object.values(states);
+  refactorIds(arr);
+  return arr;
 }
 
 export function getFixedEnd(path: types.State[]): string {

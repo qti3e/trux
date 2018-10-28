@@ -95,6 +95,9 @@ function connect(
         throw new Error("Empty group.");
       }
       connect(e.nodes[e.nodes.length - 1].id, to, states, idToASTNode);
+      for (let i = 0; i < e.nodes.length - 1; ++i) {
+        connect(e.nodes[i].id, e.nodes[i + 1].id, states, idToASTNode);
+      }
     }
     return;
   }
