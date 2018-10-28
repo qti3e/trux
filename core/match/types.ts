@@ -95,3 +95,14 @@ export interface OptimizerData {
 }
 
 export type FixedStateArray = FixedState[];
+
+export interface Matched {
+  isMatched: true;
+  params: Record<string, string>;
+}
+
+export interface NotMatched {
+  isMatched: false;
+}
+
+export type MatchedData = Matched | NotMatched;
