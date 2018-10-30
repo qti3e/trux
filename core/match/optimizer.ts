@@ -267,7 +267,7 @@ export function remap(
 
 export function getFixedEnd(path: types.State[]): string {
   const data: string[] = [];
-  for (let i = path.length - 1; i >= 0; --i) {
+  for (let i = path.length - 2; i >= 0; --i) {
     const state = path[i];
     if (state.kind === StateKind.FIXED) {
       data.push(state.data);

@@ -15,8 +15,8 @@ export class Evaluator implements Eval {
     }
     if (!this.data.onlyFixed) {
       let matched = false;
-      for (const end of this.data.endsWith) {
-        if (str.endsWith(end)) {
+      for (let i = 0; i < this.data.endsWith.length; ++i) {
+        if (str.endsWith(this.data.endsWith[i])) {
           matched = true;
           break;
         }

@@ -1,0 +1,1 @@
+import "./match/bench.ts";

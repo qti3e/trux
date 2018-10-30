@@ -1,7 +1,12 @@
 import { exit } from "deno";
 export { assert, assertEqual } from "./util.ts";
+export { bench } from "./bench.ts";
 
 export type TestFunction = () => void | Promise<void>;
+export type TestDesc = {
+  fn: TestFunction,
+  name: string
+};
 
 const RESET = "\x1b[0m";
 const FG_RED = "\x1b[31m";
@@ -11,15 +16,16 @@ const checkmark = `${FG_GREEN}✓${RESET}`;
 
 const tests = new Map<string, TestFunction>();
 
-export function test(fn: TestFunction): void {
+export function test(fn: TestFunction | TestDesc): void {
   const name = fn.name;
+  const cb: TestFunction = typeof fn === "function" ? fn : fn.fn;
   if (!name) {
     throw new Error("Test function may not be anonymous.");
   }
   if (tests.has(name)) {
     throw new Error(`Test name must be unique.\n"${name}" is already used.`);
   }
-  tests.set(name, fn);
+  tests.set(name, cb);
 }
 
 async function run(): Promise<never> {
