@@ -3,6 +3,7 @@ import * as types from "./types.ts";
 import { StateKind, refactorIds } from "./common.ts";
 
 export function optimize(states: types.State[]): types.OptimizerData {
+  // TODO(qti3e) Remove fixed!
   const paths = getAllPaths(states);
   const fixed: string[] = [];
   const endsWith: string[] = [];
@@ -11,7 +12,8 @@ export function optimize(states: types.State[]): types.OptimizerData {
   let maxLength = -Infinity;
   let endsWithDisabled = false;
 
-  for (const path of paths) {
+  for (let i = 0; i < paths.length; ++i) {
+    const path = paths[i];
     if (isFixed(path)) {
       const data: string[] = [];
       for (const state of path) {
@@ -111,7 +113,8 @@ export function joinFixedStates(states: types.Path): types.Path {
 export function removeEmptyNodes(states: types.Path): types.Path {
   const ret: types.Path = [];
 
-  for (const state of states) {
+  for (let i = 0; i < states.length; ++i) {
+    const state = states[i];
     if (state.kind === StateKind.FIXED) {
       if (state.data === "") {
         continue;
@@ -136,7 +139,8 @@ export function checkPath(path: types.Path): void {
   const seen: string[] = [];
   let parametericAllowd = true;
 
-  for (const state of path) {
+  for (let i = 0; i < path.length; ++i) {
+    const state = path[i];
     if (state.kind === StateKind.PARAMETERIC) {
       if (!parametericAllowd) {
         throw new Error("A parameter must not come after another parameter.");

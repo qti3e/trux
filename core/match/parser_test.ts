@@ -81,7 +81,13 @@ test(function parser_escape() {
   assertEqual(test2.nodes.length, 2);
   assertEqual(test2.nodes[0].data, "a(");
   assertEqual(test2.nodes[1].kind, NodeKind.GROUP);
-  // TODO(qti3e) Support \n ?
+  const test3 = parsePattern("a\n(s)") as any;
+  assertEqual(test3.nodes.length, 2);
+  assertEqual(test3.nodes[0].data, "a\n");
+  // TODO(qti3e) Maybe throw error in this case?
+  const test4 = parsePattern("a\\n(s)") as any;
+  assertEqual(test4.nodes.length, 2);
+  assertEqual(test4.nodes[0].data, "an");
 });
 
 test(function parser_unmatchedParentheses() {
