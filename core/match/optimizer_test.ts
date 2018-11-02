@@ -9,7 +9,6 @@ import {
   optimize,
   removeEmptyNodes
 } from "./optimizer.ts";
-import { log } from "./common.ts";
 
 // Utils
 
@@ -150,5 +149,4 @@ test(function optimizer() {
   const data = optimize(states);
   assertEqual(data.minLength, 3); // RXY
   assertEqual(data.maxLength, 5); // Rtest
-  assertEqual(data.states.length, 5); // S Rtest RXY E
 });

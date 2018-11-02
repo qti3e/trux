@@ -1,9 +1,9 @@
 // Convert an AST into a data structure that can be used
 // to evaluate a pattern.
 import * as types from "./types.ts";
-import { NodeKind, StateKind, refactorIds } from "./common.ts";
+import { NodeKind, StateKind } from "./common.ts";
 
-export function compile(set: types.NodeSet): types.State[] {
+export function compile(set: types.NodeSet): types.StatesObj {
   const states: types.StatesObj = {};
   const idToASTNode = new Map<number, types.Node>();
   const specialStates: types.SpecialStates = { start: 0, end: 1 };
@@ -19,9 +19,7 @@ export function compile(set: types.NodeSet): types.State[] {
   if (states[specialStates.end].nextStates.length) {
     throw new Error("Final state must not have any nextStates.");
   }
-  const arr = Object.values(states);
-  refactorIds(arr);
-  return arr;
+  return states;
 }
 
 function optinals(

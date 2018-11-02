@@ -88,7 +88,7 @@ export type Node =
 export interface OptimizerData {
   minLength: number;
   maxLength: number;
-  states?: State[];
+  states?: StatesObj;
 }
 
 export type FixedStateArray = FixedState[];
