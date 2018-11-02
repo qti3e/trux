@@ -26,6 +26,7 @@ export interface EndState {
   // It must be empty.
   // Otherwise there is an error.
   nextStates: number[];
+  data?: number;
 }
 
 export type State =
@@ -103,3 +104,10 @@ export interface NotMatched {
 }
 
 export type MatchedData = Matched | NotMatched;
+
+export type MultiPattern = [string, number];
+
+export interface MatchResult {
+  params: Record<string, string>;
+  end: number;
+}

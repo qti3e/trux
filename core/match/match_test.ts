@@ -41,9 +41,15 @@ test(function match() {
     assertEqual(m1.params["a"], "x");
     assertEqual(m1.params["b"], "y");
     const m2 = ptn.match("xxx/rrr/y");
-    assertEqual(m2.isMatched, true);
-    assertEqual(m2.params["a"], "xxx");
-    assertEqual(m2.params["b"], "rrr/y");
+    assertEqual(m2.isMatched, false);
+  }
+
+  {
+    const ptn = pattern(":a/:_") as any;
+    const m1 = ptn.match("xxx/rrr/y");
+    assertEqual(m1.isMatched, true);
+    assertEqual(m1.params["a"], "xxx");
+    assertEqual(m1.params["_"], "rrr/y");
   }
 
   {

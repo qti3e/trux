@@ -143,10 +143,5 @@ test(function optimizer_checkPath() {
 });
 
 test(function optimizer() {
-  const pattern = "R(test|XY)";
-  const nodes = parsePattern(pattern);
-  const states = compile(nodes);
-  const data = optimize(states);
-  assertEqual(data.minLength, 3); // RXY
-  assertEqual(data.maxLength, 5); // Rtest
+  // TODO(qti3e);
 });

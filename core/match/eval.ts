@@ -3,19 +3,18 @@ import { StateKind } from "./common.ts";
 
 export interface Eval {
   match(str: string): types.MatchedData;
+  matchAll(str: string): IterableIterator<types.MatchResult>;
 }
 
 export class Evaluator implements Eval {
   constructor(private data: types.OptimizerData) {}
 
-  match(str: string): types.MatchedData {
-    if (str.length > this.data.maxLength || str.length < this.data.minLength) {
-      return {
-        isMatched: false
-      }
+  *matchAll(str: string): IterableIterator<types.MatchResult> {
+    const { minLength, maxLength, states } = this.data;
+    if (str.length > maxLength || str.length < minLength) {
+      return;
     }
 
-    const states = this.data.states;
     const statesStack: types.State[] = [states[0]];
     const pathStack: number[] = [-1];
     const cursorStack: number[] = [0];
@@ -26,22 +25,6 @@ export class Evaluator implements Eval {
       const path = pathStack.pop();
       const cursor = cursorStack.pop();
 
-      if (state.kind === StateKind.END && cursor === str.length) {
-        const params = {};
-        for (let i = 1; i < cursorStack.length; ++i) {
-          const start = cursorStack[i - 1];
-          const end = cursorStack[i];
-          const state = statesStack[i];
-          if (state.kind === StateKind.PARAMETERIC) {
-            params[state.name] = str.substring(start, end);
-          }
-        }
-        return {
-          isMatched: true,
-          params
-        };
-      }
-
       if (cursor > str.length) {
         // Fallback.
         continue;
@@ -50,7 +33,8 @@ export class Evaluator implements Eval {
       const nextStateId = state.nextStates[path + 1];
       const nextState = states[nextStateId];
       if (!nextState) {
-        if (state.kind === StateKind.PARAMETERIC) {
+        if (state.kind === StateKind.PARAMETERIC &&
+          (str[cursor] !== "/" || state.name === "_")) {
           statesStack.push(state);
           pathStack.push(-1);
           cursorStack.push(cursor + 1);
@@ -72,14 +56,36 @@ export class Evaluator implements Eval {
         }
       } else if (nextState.kind === StateKind.PARAMETERIC) {
         nextCursor += 1;
+      } else if (nextState.kind === StateKind.END) {
+        if (nextCursor < str.length) {
+          continue;
+        }
+        const params = {};
+        for (let i = 1; i < cursorStack.length; ++i) {
+          const start = cursorStack[i - 1];
+          const end = cursorStack[i];
+          const state = statesStack[i];
+          if (state.kind === StateKind.PARAMETERIC) {
+            params[state.name] = str.substring(start, end);
+          }
+        }
+        yield { params, end: nextState.data };
       }
       statesStack.push(nextState);
       pathStack.push(-1);
       cursorStack.push(nextCursor);
     }
+  }
 
+  match(str: string): types.MatchedData {
+    for (const { params } of this.matchAll(str)) {
+      return {
+        isMatched: true,
+        params
+      };
+    }
     return {
       isMatched: false
-    }
+    };
   }
 }

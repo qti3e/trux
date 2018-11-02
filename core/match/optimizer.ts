@@ -4,8 +4,7 @@ import { StateKind } from "./common.ts";
 
 let lastID = 0;
 
-export function optimize(states: types.StatesObj): types.OptimizerData {
-  const paths = getAllPaths(states);
+export function optimize(paths: Array<types.Path>): types.OptimizerData {
   let minLength = Infinity;
   let maxLength = -Infinity;
 
@@ -216,6 +215,7 @@ export function remap(paths: Array<types.Path>): types.StatesObj {
           prevID2ID.set(state.id, id);
           states[id] = {
             kind: StateKind.END,
+            data: state.data,
             id,
             nextStates: []
           };
@@ -231,10 +231,10 @@ export function remap(paths: Array<types.Path>): types.StatesObj {
   return states;
 }
 
-export function getAllPaths(states: types.StatesObj): Array<types.State[]> {
-  const ret: Array<types.State[]> = [];
+export function getAllPaths(states: types.StatesObj): Array<types.Path> {
+  const ret: Array<types.Path> = [];
 
-  const statesStack: types.State[] = [states[0]];
+  const statesStack: types.Path = [states[0]];
   const pathStack: number[] = [-1];
 
   while (statesStack.length) {
