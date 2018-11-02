@@ -15,31 +15,6 @@ export class Evaluator implements Eval {
       }
     }
 
-    if (!this.data.onlyFixed) {
-      let matched = false;
-      for (let i = 0; i < this.data.endsWith.length; ++i) {
-        if (str.endsWith(this.data.endsWith[i])) {
-          matched = true;
-          break;
-        }
-      }
-      if (!matched) {
-        return {
-          isMatched: false
-        }
-      }
-    }
-    if (this.data.fixed.includes(str)) {
-      return {
-        isMatched: true,
-        params: {}
-      };
-    } else if (this.data.onlyFixed) {
-      return {
-        isMatched: false
-      }
-    }
-
     const states = this.data.states;
     const statesStack: types.State[] = [states[0]];
     const pathStack: number[] = [-1];

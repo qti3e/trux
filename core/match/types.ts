@@ -86,11 +86,8 @@ export type Node =
   | GroupSepNode;
 
 export interface OptimizerData {
-  onlyFixed: boolean;
   minLength: number;
   maxLength: number;
-  fixed: string[];
-  endsWith: string[];
   states?: State[];
 }
 

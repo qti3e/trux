@@ -1,12 +1,15 @@
 import * as types from "./types.ts";
 import { test, assert, assertEqual } from "../testing/test.ts";
 import { StateKind } from "./common.ts";
+import { parsePattern } from "./parser.ts";
+import { compile } from "./compiler.ts";
 import {
   checkPath,
   joinFixedStates,
   optimize,
   removeEmptyNodes
 } from "./optimizer.ts";
+import { log } from "./common.ts";
 
 // Utils
 
@@ -104,8 +107,6 @@ test(function optimizer_removeEmptyNodes() {
     ":A", ":B"
   ]);
 
-  // TODO(qti3e) Test a complete pattern.
-  // parse("s(r|)g");
 });
 
 test(function optimizer_checkPath() {
@@ -143,5 +144,11 @@ test(function optimizer_checkPath() {
 });
 
 test(function optimizer() {
-  // TODO(qti3e)
+  const pattern = "R(test|XY)";
+  const nodes = parsePattern(pattern);
+  const states = compile(nodes);
+  const data = optimize(states);
+  assertEqual(data.minLength, 3); // RXY
+  assertEqual(data.maxLength, 5); // Rtest
+  assertEqual(data.states.length, 5); // S Rtest RXY E
 });

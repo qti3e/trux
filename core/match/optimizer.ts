@@ -2,87 +2,46 @@
 import * as types from "./types.ts";
 import { StateKind, refactorIds } from "./common.ts";
 
+let lastID = 0;
+
 export function optimize(states: types.State[]): types.OptimizerData {
-  // TODO(qti3e) Remove fixed!
   const paths = getAllPaths(states);
-  const fixed: string[] = [];
-  const endsWith: string[] = [];
-  const dynamicPaths: Array<types.State[]> = [];
   let minLength = Infinity;
   let maxLength = -Infinity;
-  let endsWithDisabled = false;
 
+  lastID = 0;
   for (let i = 0; i < paths.length; ++i) {
-    const path = paths[i];
-    if (isFixed(path)) {
-      const data: string[] = [];
-      for (const state of path) {
-        data.push(state.data);
-      }
-      const str = data.join("");
-      if (!fixed.includes(str)) {
-        fixed.push(str);
-        if (str.length < minLength) {
-          minLength = str.length;
-        }
-        if (str.length > maxLength) {
-          maxLength = str.length;
-        }
-      }
-    } else {
-      let len = 0;
-      for (const state of path) {
-        if (state.kind === StateKind.FIXED) {
-          len += state.data.length;
-        } else if (state.kind === StateKind.PARAMETERIC) {
-          // A PARAMETERIC state must match at least 1 byte.
-          len += 1;
-        }
-      }
+    paths[i] = joinFixedStates(paths[i]);
+    paths[i] = removeEmptyNodes(paths[i]);
+    checkPath(paths[i]);
+
+    const firstState = paths[i][0];
+    if (paths[i].length === 2 && firstState.kind === StateKind.FIXED) {
+      const len = firstState.data.length;
       if (len < minLength) {
         minLength = len;
       }
-      maxLength = Infinity;
-      dynamicPaths.push(path);
-      if (!endsWithDisabled) {
-        const fixedEnd = getFixedEnd(path);
-        if (fixedEnd === "") {
-          endsWithDisabled = true;
-          endsWith.splice(0);
-          endsWith.push("");
-        } else if (!endsWith.includes(fixedEnd)) {
-          endsWith.push(fixedEnd);
-        }
+      if (len > maxLength) {
+        maxLength = len;
       }
     }
   }
 
-  if (fixed.length === paths.length) {
-    return {
-      onlyFixed: true,
-      minLength,
-      maxLength,
-      fixed,
-      endsWith
-    };
+  if (minLength === Infinity) {
+    minLength = -Infinity;
   }
 
-  for (let i = 0; i < dynamicPaths.length; ++i) {
-    dynamicPaths[i] = joinFixedStates(dynamicPaths[i]);
-    dynamicPaths[i] = removeEmptyNodes(dynamicPaths[i]);
-    checkPath(dynamicPaths[i]);
+  if (maxLength === -Infinity) {
+    maxLength = Infinity;
   }
 
   // Remmber: Test for H(:id)H
   // Also H(:id)/(H|P)?
 
   return {
-    onlyFixed: false,
     minLength,
     maxLength,
-    fixed,
-    endsWith,
-    states: remap(dynamicPaths, states)
+    states: remap(paths, states)
   };
 }
 
@@ -100,10 +59,14 @@ export function joinFixedStates(states: types.Path): types.Path {
       }
       ret.push({
         ...state,
+        id: ++lastID,
         data: data.join("")
       });
     } else {
-      ret.push(state);
+      ret.push({
+        ...state,
+        id: ++lastID
+      });
     }
   }
 
@@ -183,7 +146,7 @@ export function remap(
     }
   }
 
-  let lastID = 0;
+  lastID = 0;
   const dataToID = new Map<string, number>();
   const paramNameToID = new Map<string, number>();
   const prevID2ID = new Map<number, number>();
@@ -267,19 +230,6 @@ export function remap(
   const arr = Object.values(states);
   refactorIds(arr);
   return arr;
-}
-
-export function getFixedEnd(path: types.State[]): string {
-  const data: string[] = [];
-  for (let i = path.length - 2; i >= 0; --i) {
-    const state = path[i];
-    if (state.kind === StateKind.FIXED) {
-      data.push(state.data);
-    } else {
-      break;
-    }
-  }
-  return data.reverse().join("");
 }
 
 export function getAllPaths(states: types.State[]): Array<types.State[]> {

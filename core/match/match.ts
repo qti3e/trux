@@ -11,6 +11,6 @@ export function pattern(pattern: string): Eval {
   return new Evaluator(optimized);
 }
 
-const ptn = pattern("XP:t/:y/ap");
-console.log(ptn.match("XPA/hdsds/ap"));
-// [ 0, 2, 3, 4, 9, 12, 12 ]
+const ptn = pattern("RT(F|:p)HL");
+console.log(ptn.match("RTFHL"));
+console.log(ptn.match("RTFPHL"));
