@@ -5,19 +5,20 @@ import { multi } from "./match.ts";
 const ptn = multi([
   ["/users", 0],
   ["/users", 1],
-  ["/users/:id", 2],
+  ["/users/:_", 2],
   ["/users/:id/followers", 3]
 ]);
 
 async function t(p) {
   console.log(p);
   return {
-    next: true
+    next: false
   };
 }
 
 async function main() {
-  for (const { params, end } of ptn.matchAll("/users/34/followers")) {
+  const tmp = ptn.matchAll("/users/34/followers");
+  for (const { params, end } of tmp) {
     // t = fns[end];
     console.log("END", end);
     const { next } = await t(params);

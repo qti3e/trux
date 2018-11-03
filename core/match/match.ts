@@ -5,6 +5,8 @@ import { getAllPaths, optimize } from "./optimizer.ts";
 import { Eval, Evaluator } from "./eval.ts";
 import { StateKind } from "./common.ts";
 
+export { Eval } from "./eval.ts";
+
 // TODO(qti3e) Add Regexp backend.
 
 export function pattern(pattern: string): Eval {
