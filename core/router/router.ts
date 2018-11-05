@@ -1,11 +1,18 @@
 import { Eval, multi, hasUnderscore } from "../match/match.ts";
 import { Methods } from "../http/parser.ts";
 
-type CbFn = (req: null, res: null, next: () => void) => void | Promise<void>;
-type Cb = CbFn | Router;
+interface Request {
+  method: Methods;
+  setParams(params: Record<string, string>): void;
+}
+
+type NextCb = () => void;
+type CbReturn = void | Promise<void>;
+type CbFn<Req, Res> = (req: Req, res: Res, next: NextCb) => CbReturn;
+type Cb<Req extends Request, Res> = CbFn<Req, Res> | Router<Req, Res>;
 type URL = string;
 
-const routers = [];
+const routers: Router<Request, unknown>[] = [];
 
 export function bootstrap() {
   for (let i = 0; i < routers.length; ++i) {
@@ -16,19 +23,15 @@ export function bootstrap() {
   routers.splice(0);
 }
 
-export class Router {
+export class Router<Req extends Request, Res> {
   private patternEval: Eval;
-  private routes: Array<[URL, Cb, Methods[]]> = [];
+  private routes: Array<[URL, Cb<Req, Res>, Methods[]]> = [];
   private updated = false;
 
   protected initPatternEval() {
     const patterns = [];
     for (let i = 0; i < this.routes.length; ++i) {
-      const cb = this.routes[i][1];
       patterns.push([this.routes[i][0], i]);
-      if (cb instanceof Router) {
-        cb.forceUpdate();
-      }
     }
     this.patternEval = multi(patterns);
   }
@@ -44,7 +47,7 @@ export class Router {
     }
   }
 
-  addRouter(methods: Methods[], url: string, cb: Cb): void {
+  addRouter(methods: Methods[], url: string, cb: Cb<Req, Res>): void {
     if (cb instanceof Router) { 
       if (!hasUnderscore(url)) {
         url += "(/:_)?";
@@ -61,31 +64,42 @@ export class Router {
     }
   }
 
-  use(url: string, cb: Cb): void {
-    this.addRouter([], url + "(/:_)?", cb);
+  use(cb: Cb<Req, Res>): void;
+  use(url: string, cb: Cb<Req, Res>): void;
+  use() {
+    if (arguments.length === 1) {
+      this.addRouter([], "(/:_)?", arguments[0]);
+    } else {
+      this.addRouter([], arguments[0] + "(/:_)?", arguments[1]);
+    }
   }
 
-  any(url: string, cb: Cb): void {
+  any(url: string, cb: Cb<Req, Res>): void {
     this.addRouter([], url, cb);
   }
 
-  post(url: string, cb: Cb): void {
+  post(url: string, cb: Cb<Req, Res>): void {
     this.addRouter([Methods.POST], url, cb);
   }
 
-  get(url: string, cb: Cb): void {
+  get(url: string, cb: Cb<Req, Res>): void {
     this.addRouter([Methods.GET], url, cb);
   }
 
-  put(url: string, cb: Cb): void {
+  put(url: string, cb: Cb<Req, Res>): void {
     this.addRouter([Methods.PUT], url, cb);
   }
 
-  delete(url: string, cb: Cb): void {
+  delete(url: string, cb: Cb<Req, Res>): void {
     this.addRouter([Methods.DELETE], url, cb);
   }
 
-  async handle(url, request, response, _next?) {
+  async handle(
+    url: string,
+    request: Req,
+    response: Res,
+    _next?: { next: boolean }
+  ): Promise<void> {
     const next = _next || { next: false };
     const nextCb = () => next.next = true;
     const iter = this.patternEval.matchAll(url);
@@ -93,6 +107,7 @@ export class Router {
       next.next = false;
       const [ _, fn, methods ] = this.routes[end];
       if (methods.length) {
+        // TODO(qti3e) Use bit mask.
         if (methods.indexOf(request.method) < 0) {
           continue;
         }
