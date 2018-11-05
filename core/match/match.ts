@@ -6,6 +6,7 @@ import { Eval, Evaluator } from "./eval.ts";
 import { StateKind } from "./common.ts";
 
 export { Eval } from "./eval.ts";
+export { hasUnderscore } from "./parser.ts";
 
 // TODO(qti3e) Add Regexp backend.
 

@@ -1,5 +1,5 @@
 import { test, assert, assertEqual } from "../testing/test.ts";
-import { parsePattern } from "./parser.ts";
+import { hasUnderscore, parsePattern } from "./parser.ts";
 import { NodeKind } from "./common.ts";
 
 test(function parser_emptyPattern() {
@@ -99,4 +99,12 @@ test(function parser_unmatchedParentheses() {
   }
   assert(err);
   assertEqual(err.message, "Unmatched parentheses.");
+});
+
+test(function parser_hasUnderscore() {
+  assertEqual(hasUnderscore(""), false);
+  assertEqual(hasUnderscore(":_"), true);
+  assertEqual(hasUnderscore("(:_)"), true);
+  assertEqual(hasUnderscore("P(:_)R"), true);
+  assertEqual(hasUnderscore("P(:P)R"), false);
 });

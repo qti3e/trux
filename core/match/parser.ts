@@ -3,6 +3,7 @@ import * as types from "./types.ts";
 import { NodeKind } from "./common.ts";
 
 let lastId = 0;
+let lastHasUnderscore = false;
 
 interface ParserReturn {
   set: types.NodeSet;
@@ -125,6 +126,10 @@ function parse(pattern: string, from = 0): ParserReturn {
         if (node.name === "") {
           throw new TypeError("Parameter name expected.");
         }
+        // Special case, this data is used in hasUnderscore();
+        if (node.name === "_") {
+          lastHasUnderscore = true;
+        }
         // cursor points to the last character of parameter's name.
         // We don't want to parse that character again so +1.
         ++cursor;
@@ -180,4 +185,10 @@ export function parsePattern(pattern: string): types.NodeSet {
     throw new Error("Can not parse pattern.");
   }
   return set;
+}
+
+export function hasUnderscore(pattern: string): boolean {
+  lastHasUnderscore = false;
+  parsePattern(pattern);
+  return lastHasUnderscore;
 }
