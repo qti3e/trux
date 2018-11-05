@@ -1,11 +1,9 @@
-import { Eval, multi } from "../match/match.ts";
+import { Eval, multi, hasUnderscore } from "../match/match.ts";
 import { Methods } from "../http/parser.ts";
 
-type CbFn = (...args: unknown[]) => void | Promise<void>;
+type CbFn = (req: null, res: null, next: () => void) => void | Promise<void>;
 type Cb = CbFn | Router;
 type URL = string;
-
-let lastId = 0;
 
 export class Router {
   protected isServer = false;
@@ -14,25 +12,40 @@ export class Router {
 
   protected initPatternEval() {
     const patterns = [];
-    for (let i = 0; i < routes.length; ++i) {
-      const id = lastId++;
-      patterns.push([routes[0][0], i]);
+    for (let i = 0; i < this.routes.length; ++i) {
+      patterns.push([this.routes[i][0], i]);
     }
+    console.log(patterns);
     this.patternEval = multi(patterns);
   }
 
+  constructor() {
+    setTimeout(() => {
+      this.initPatternEval();
+    }, 10);
+  }
+
   addRouter(methods: Methods[], url: string, cb: Cb): void {
+    if (cb instanceof Router) { 
+      if (!hasUnderscore(url)) {
+        url += "/(:_)?";
+      }
+    }
+
     this.routes.push([url, cb, methods]);
+
     if (this.patternEval) {
       // By design hot route modification is expensive and
       // should be avoided.
-      // So maybe throw error or print a warning?
+      // So maybe throw an error or print a warning?
+      // TODO(qti3e) Throw error and tell users to use foreUpdate().
+      // foreUpdate should call initPatternEval directly.
       this.initPatternEval();
     }
   }
 
   use(cb: Cb): void {
-    this.addRouter([], "(:_)?", cb);
+    this.addRouter([], "/(:_)?", cb);
   }
 
   any(url: string, cb: Cb): void {
@@ -68,12 +81,13 @@ export class Router {
         }
       }
       request.setParams(params);
+      const nextURL = "/" + (params["_"] || "");
       if (fn instanceof Router) {
-        await fn.handle(params["_"], request, response, next);
+        await fn.handle(nextURL, request, response, next);
       } else {
         await fn(request, response, nextCb);
       }
-      if (!next) {
+      if (!next.next) {
         break;
       }
     }
