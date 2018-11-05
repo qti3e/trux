@@ -25,7 +25,7 @@ export function bootstrap() {
 
 export class Router<Req extends Request, Res> {
   private patternEval: Eval;
-  private routes: Array<[URL, Cb<Req, Res>, Methods[]]> = [];
+  private routes: Array<[URL, Cb<Req, Res>, number]> = [];
   private updated = false;
 
   protected initPatternEval() {
@@ -54,7 +54,12 @@ export class Router<Req extends Request, Res> {
       }
     }
 
-    this.routes.push([url, cb, methods]);
+    let methodsMask = 0;
+    for (let i = 0; i < methods.length; ++i) {
+      methodsMask |= methods[i];
+    }
+
+    this.routes.push([url, cb, methodsMask]);
     this.updated = false;
 
     if (this.patternEval) {
@@ -106,11 +111,8 @@ export class Router<Req extends Request, Res> {
     for (const { params, end } of iter) {
       next.next = false;
       const [ _, fn, methods ] = this.routes[end];
-      if (methods.length) {
-        // TODO(qti3e) Use bit mask.
-        if (methods.indexOf(request.method) < 0) {
-          continue;
-        }
+      if (methods !== 0 && (methods & request.method) === 0) {
+        continue;
       }
       request.setParams(params);
       const nextURL = "/" + (params["_"] || "");
