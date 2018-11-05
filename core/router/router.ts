@@ -5,23 +5,43 @@ type CbFn = (req: null, res: null, next: () => void) => void | Promise<void>;
 type Cb = CbFn | Router;
 type URL = string;
 
+const routers = [];
+
+export function bootstrap() {
+  for (let i = 0; i < routers.length; ++i) {
+    routers[i].forceUpdate();
+  }
+  // Remove refrences to routers, so that we don't
+  // prevent a Router from being garbage collected.
+  routers.splice(0);
+}
+
 export class Router {
-  protected isServer = false;
   private patternEval: Eval;
   private routes: Array<[URL, Cb, Methods[]]> = [];
+  private updated = false;
 
   protected initPatternEval() {
     const patterns = [];
     for (let i = 0; i < this.routes.length; ++i) {
+      const cb = this.routes[i][1];
       patterns.push([this.routes[i][0], i]);
+      if (cb instanceof Router) {
+        cb.forceUpdate();
+      }
     }
     this.patternEval = multi(patterns);
   }
 
   constructor() {
-    setTimeout(() => {
+    routers.push(this);
+  }
+
+  forceUpdate() {
+    if (!this.updated) {
       this.initPatternEval();
-    }, 10);
+      this.updated = true;
+    }
   }
 
   addRouter(methods: Methods[], url: string, cb: Cb): void {
@@ -32,14 +52,12 @@ export class Router {
     }
 
     this.routes.push([url, cb, methods]);
+    this.updated = false;
 
     if (this.patternEval) {
-      // By design hot route modification is expensive and
-      // should be avoided.
-      // So maybe throw an error or print a warning?
-      // TODO(qti3e) Throw error and tell users to use foreUpdate().
-      // foreUpdate should call initPatternEval directly.
-      this.initPatternEval();
+      // By design hot route modification is expensive and should be avoided.
+      throw new Error("Hot-route modification should be avoided," +
+        " Consider using Router.forceUpdate() to apply changes.");
     }
   }
 
