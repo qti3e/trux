@@ -21,7 +21,9 @@ export function optimize(paths: Array<types.Path>): types.OptimizerData {
           len += state.data.length;
           break;
         case StateKind.PARAMETERIC:
-          len += 1;
+          if (state.name !== "_") {
+            len += 1;
+          }
           maxLength = Infinity;
           break;
       }

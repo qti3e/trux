@@ -68,7 +68,10 @@ export class Evaluator implements Eval {
           continue;
         }
       } else if (nextState.kind === StateKind.PARAMETERIC) {
-        nextCursor += 1;
+        // _ can match an empty string.
+        if (nextState.name !== "_") {
+          nextCursor += 1;
+        }
       } else if (nextState.kind === StateKind.END) {
         if (nextCursor < str.length) {
           continue;

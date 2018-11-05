@@ -75,4 +75,17 @@ test(function match() {
     assertEqual(m2.isMatched, true);
     assertEqual(m2.params["x"], "PP");
   }
+
+  {
+    const ptn = pattern("R(:_)D") as any;
+    const m1 = ptn.match("RD");
+    assertEqual(m1.isMatched, true);
+    assertEqual(m1.params["_"], "");
+  }
+
+  {
+    const ptn = pattern("R(:R)D") as any;
+    const m1 = ptn.match("RD");
+    assertEqual(m1.isMatched, false);
+  }
 });
