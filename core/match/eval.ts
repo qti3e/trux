@@ -2,12 +2,25 @@ import * as types from "./types.ts";
 import { StateKind } from "./common.ts";
 
 export interface Eval {
+  hasUnderscore: boolean;
   match(str: string): types.MatchedData;
   matchAll(str: string): IterableIterator<types.MatchResult>;
 }
 
 export class Evaluator implements Eval {
-  constructor(private data: types.OptimizerData) {}
+  hasUnderscore: boolean = false;
+
+  constructor(private data: types.OptimizerData) {
+    for (const key in data.states) {
+      const state = data.states[key];
+      if (state.kind === StateKind.PARAMETERIC) {
+        if (state.name === "_") {
+          this.hasUnderscore = true;
+          break;
+        }
+      }
+    }
+  }
 
   *matchAll(str: string): IterableIterator<types.MatchResult> {
     const { minLength, maxLength, states } = this.data;
