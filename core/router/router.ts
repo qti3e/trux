@@ -15,7 +15,6 @@ export class Router {
     for (let i = 0; i < this.routes.length; ++i) {
       patterns.push([this.routes[i][0], i]);
     }
-    console.log(patterns);
     this.patternEval = multi(patterns);
   }
 
@@ -28,7 +27,7 @@ export class Router {
   addRouter(methods: Methods[], url: string, cb: Cb): void {
     if (cb instanceof Router) { 
       if (!hasUnderscore(url)) {
-        url += "/(:_)?";
+        url += "(/:_)?";
       }
     }
 
@@ -44,8 +43,8 @@ export class Router {
     }
   }
 
-  use(cb: Cb): void {
-    this.addRouter([], "/(:_)?", cb);
+  use(url: string, cb: Cb): void {
+    this.addRouter([], url + "(/:_)?", cb);
   }
 
   any(url: string, cb: Cb): void {
