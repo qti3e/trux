@@ -33,6 +33,7 @@ export class Router<Req extends Request, Res> {
     for (let i = 0; i < this.routes.length; ++i) {
       patterns.push([this.routes[i][0], i]);
     }
+    console.log(patterns);
     this.patternEval = multi(patterns);
   }
 

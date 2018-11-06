@@ -3,7 +3,6 @@ import { Server } from "./api.ts";
 const server = new Server();
 server.get("/", (req, res) => {
   res.write("Hello World");
-  console.log("/");
 });
 
 server.get("/hi", (req, res) => {
@@ -17,10 +16,11 @@ server.get("/hi/:r", req => {
   console.log(req);
 });
 
-server.use((req, res) => {
+server.use((req, res, next) => {
   // TODO(qti3e) Think about handling errors!
   console.log("404");
   res.write("");
+  next();
 });
 
 server.listen("0.0.0.0:8080");

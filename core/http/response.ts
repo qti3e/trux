@@ -3,6 +3,8 @@ import { status } from "./status.ts";
 
 const encoder = new TextEncoder("utf-8");
 
+let open = 0;
+
 export class Response {
   readonly headers = new Headers();
   readonly sentHeaders = false;
@@ -12,6 +14,7 @@ export class Response {
   private askedClose = false;
 
   constructor(public conn: deno.Conn) {
+    open++;
     this.headers.set("Content-Type", "text/html; charset=utf-8");
     this.headers.set("Connection", "keep-alive");
   }
@@ -37,6 +40,8 @@ export class Response {
       this.askedClose = true;
       return;
     }
+    console.log(open);
+    open--;
     this.conn.close();
   }
 

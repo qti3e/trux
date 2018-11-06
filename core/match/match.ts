@@ -34,5 +34,6 @@ export function multi(patterns: types.MultiPattern[]): Eval {
     }
   }
   const optimized = optimize(paths);
+  console.log(JSON.stringify(optimized, null, 4));
   return new Evaluator(optimized);
 }

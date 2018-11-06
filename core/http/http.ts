@@ -69,6 +69,7 @@ export class Server<
 
     const request = new Request(options) as Req;
     const response = new Response(conn) as Res;
+    // This function is slow af, TODO: FIX
     await this.handle(options.url, request, response);
 
     /**
