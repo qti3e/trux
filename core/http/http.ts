@@ -9,6 +9,8 @@ export type ServerInit = deno.Listener | Address;
 
 let bootstrapTimeout: number;
 
+const buffers: Uint8Array[] = [];
+
 export class Server<
   Req extends Request = Request,
   Res extends Response = Response> extends Router<Req, Res> {
@@ -48,8 +50,7 @@ export class Server<
   private async handleConn(conn: deno.Conn) {
     const parser = new HTTPParser();
     const options: ParserInfo = parser.info;
-    // TODO(qti3e) Reuse buf
-    const buf = new Uint8Array(65536);
+    const buf = buffers.pop() || (new Uint8Array(65536));
 
     // Parse headers. (But NOT bodies)
     for (;;) {
@@ -82,32 +83,8 @@ export class Server<
      * });
      */
 
-    const res_headers = `HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-Connection: keep-alive
-Access-Control-Allow-Origin: *
-Vary: Accept-Encoding,Cookie
-
-`.split(/\r?\n/g).join("\r\n");
-
-    const encoder = new TextEncoder("utf-8");
-    const res_headers_buf = encoder.encode(res_headers);
-    await conn.write(res_headers_buf);
-    await conn.write(encoder.encode("Hello " + options.url + "\n"));
-    conn.close();
+    response.end();
+    buffers.push(buf);
   }
 }
 
-const server = new Server();
-server.get("/", req => {
-  console.log("/");
-});
-server.get("/hi", req => {
-  console.log("/hi");
-});
-server.get("/hi/:r", req => {
-  console.log("/hi/" + req.parameters.r);
-  console.log(req.parameters);
-  console.log(req);
-});
-server.listen("0.0.0.0:8080");
